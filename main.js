@@ -53,13 +53,13 @@ var rooms = {
     },
     SU21: {
         enabled: true,
-        pool: "luxus-2sz",
+        pool: "luxus2sz",
         ics_lnk : "https://www.lodgit.com/ics/N8EPR-39734-1WG3T-E4VVP-77V5L-NKPN4-JC/D5GM7-366FW-LFWD3-BTBGT-70Z2Z-NXSH9-C6.ics",
         ics_txt : "",
     },
     SU22: {
         enabled: true,
-        pool: "luxus-2sz",
+        pool: "luxus2sz",
         ics_lnk : "https://www.lodgit.com/ics/N8EPR-39734-1WG3T-E4VVP-77V5L-NKPN4-JC/DKA8R-SRHE0-T6U25-U87VN-SFYQU-M2T02-E8.ics",
         ics_txt : "",
     },
@@ -70,6 +70,18 @@ var rooms = {
         ics_txt : "",
     }
 };
+
+var pools = {
+    luxus: {
+        merged: []
+    },
+    comfort: {
+        merged: []
+    },
+    luxus2sz: {
+        merged: []
+    }
+}
 
 //define pools
 
@@ -118,7 +130,8 @@ var promises = Object.keys(rooms).map(fn);
 var p_result = Promise.all(promises);
 
 p_result.then(function(){
-    log_rooms();
+    //log_rooms();
+    mergeAllPools();
 });
 
 function log_rooms(){
@@ -130,8 +143,65 @@ function log_rooms(){
         rooms[r_key].evts_txt.forEach((e)=>{
             console.log(e);
         });
+        rooms[r_key].evts.forEach((e)=>{
+            console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
+        });
     });
 }
+
+function mergeAllPools(){
+    //merge("comfort");
+    merge("luxus");
+    //merge("luxus2z");
+}
+
+function merge(poolName){
+    var firstDone = false;
+    Object.keys(rooms).forEach((r_key,i,arr)=>{
+        if (!rooms[r_key].enabled) return;
+        if (rooms[r_key].pool!=poolName) return;
+        if (firstDone)return;
+        firstDone=true;
+        console.log("\n---- " + r_key + " --------------------------------------------------");
+
+        rooms[r_key].evts.forEach((e,i,arr)=>{
+            console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
+            if (i == 0) return;
+            if (i == arr.length -1) return;
+            var iD = e.begin;
+            while(iD.isSameOrBefore(e.end)){
+                console.log(iD.format("YYYY.MM.DD"));
+                //does this day occur in any other reserved timperiod of other rooms in this pool
+                iD.add(1,"d");
+            }
+        });
+    });
+}
+
+function reservedInEveryOtherRoom(poolName){
+    var firstDone = false;
+    Object.keys(rooms).forEach((r_key,i,arr)=>{
+        if (!rooms[r_key].enabled) return;
+        if (rooms[r_key].pool!=poolName) return;
+        if (firstDone)return;
+        firstDone=true;
+        console.log("\n---- " + r_key + " --------------------------------------------------");
+
+        rooms[r_key].evts.forEach((e,i,arr)=>{
+            console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
+            if (i == 0) return;
+            if (i == arr.length -1) return;
+            var iD = e.begin;
+            while(iD.isSameOrBefore(e.end)){
+                console.log(iD.format("YYYY.MM.DD"));
+                //does this day occur in any other reserved timperiod of other rooms in this pool
+                iD.add(1,"d");
+            }
+        });
+    });
+}
+
+
 
 //compare AND and merge in obj
 

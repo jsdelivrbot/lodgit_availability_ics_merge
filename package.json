@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/haemse/lodgit_availability_ics_merge/issues"
   },
-  "homepage": "https://github.com/haemse/lodgit_availability_ics_merge#readme"
+  "homepage": "https://github.com/haemse/lodgit_availability_ics_merge#readme",
+  "dependencies": {
+    "moment": "^2.18.1"
+  }
 }

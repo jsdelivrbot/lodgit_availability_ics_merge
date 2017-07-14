@@ -1,4 +1,5 @@
 var request = require('request');
+var moment = require('moment');
 //define rooms and pools
 
 var rooms = {
@@ -96,13 +97,14 @@ var fn = function (key, i, arr){
 
                 var res = true;
                 rooms[key].evts_txt = new Array();
+                rooms[key].evts = new Array();
 
                 while (res){
                     res = reg.exec(rooms[key].ics_txt);
                     if (res==null){break;}
 
                     //console.log(res);
-
+                    rooms[key].evts.push({begin: moment(res[1], "YYYYMMDD"), end: moment(res[2], "YYYYMMDD")});
                     rooms[key].evts_txt.push({begin: res[1], end: res[2]});
                 }
                 resolve(true);
@@ -123,7 +125,7 @@ function log_rooms(){
     console.log(rooms);
     Object.keys(rooms).forEach((r_key)=>{
         if (!rooms[r_key].enabled) return;
-        console.log("-------------- " + r_key + " --------------");
+        console.log("\n---- " + r_key + " --------------------------------------------------");
         console.log(rooms[r_key].ics_txt);
         rooms[r_key].evts_txt.forEach((e)=>{
             console.log(e);

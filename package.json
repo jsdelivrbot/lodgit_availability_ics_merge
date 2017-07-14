@@ -1,0 +1,24 @@
+{
+  "name": "lodgit_availability_ics_merger",
+  "version": "1.0.0",
+  "description": "pulls availablitiy ics files from lodgit server merges pools and provides them for other servers - f.i. airbnb goal is to tell airbnb if one room of a pool of rooms is available",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/haemse/lodgit_availability_ics_merge.git"
+  },
+  "keywords": [
+    "lodgit",
+    "availability",
+    "ics"
+  ],
+  "author": "Jacob Haemmerle",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/haemse/lodgit_availability_ics_merge/issues"
+  },
+  "homepage": "https://github.com/haemse/lodgit_availability_ics_merge#readme"
+}

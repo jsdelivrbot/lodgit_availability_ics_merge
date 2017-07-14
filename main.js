@@ -78,41 +78,58 @@ var rooms = {
 
 var reg = /BEGIN:VEVENT\nDTSTART:([0-9]{8})\nDTEND:([0-9]{8})/g;
 
-Object.keys(rooms).forEach(function(key, i, arr) {
-    // console.log(key);
-    request(rooms[key].ics_lnk, function (error, response, body) {
-        if (error) {
-            return false;
-        }
-        if (rooms[key].enabled){
-            console.log("-------------- " + key + " --------------");
+var fn = function (key, i, arr){
+    return new Promise((resolve,reject) => {
+        request(rooms[key].ics_lnk, function (error, response, body) {
+            if (error) {
+                resolve(false);
+                reject(true);
+                return false;
+            }
+            if (rooms[key].enabled){
+                //console.log("-------------- " + key + " --------------");
 
-            // console.log('error:', error); // Print the error if one occurred 
-            // console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received 
-            
-            rooms[key].ics_txt = body;
-            
-            console.log(rooms[key].ics_txt);
-
-            var res = true;
-            rooms[key].evts_txt = new Array();
-
-            while (res){
-                res = reg.exec(rooms[key].ics_txt);
-                if (res==null){break;}
-
-                //console.log(res);
-
-                rooms[key].evts_txt.push({begin: res[1], end: res[2]});
+                // console.log('error:', error); // Print the error if one occurred 
+                // console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received 
                 
+                rooms[key].ics_txt = body;
+
+                var res = true;
+                rooms[key].evts_txt = new Array();
+
+                while (res){
+                    res = reg.exec(rooms[key].ics_txt);
+                    if (res==null){break;}
+
+                    //console.log(res);
+
+                    rooms[key].evts_txt.push({begin: res[1], end: res[2]});
+                }
+                resolve(true);
             }
-            
-            if (i == arr.length - 1){
-                console.log(rooms);
-            }
-        }
+        })
     });
+}
+
+var promises = Object.keys(rooms).map(fn);
+
+var p_result = Promise.all(promises);
+
+p_result.then(function(){
+    log_rooms();
 });
+
+function log_rooms(){
+    console.log(rooms);
+    Object.keys(rooms).forEach((r_key)=>{
+        if (!rooms[r_key].enabled) return;
+        console.log("-------------- " + r_key + " --------------");
+        console.log(rooms[r_key].ics_txt);
+        rooms[r_key].evts_txt.forEach((e)=>{
+            console.log(e);
+        });
+    });
+}
 
 //compare AND and merge in obj
 

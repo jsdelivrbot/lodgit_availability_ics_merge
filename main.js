@@ -13,6 +13,7 @@ je nach sommer oder winterzeit der tag davor 22:00 oder 23:00 - das passt so, is
 var request = require('request');
 var moment = require('moment');
 var out = require('./out.js');
+var fs = require('fs');
 //define rooms and pools
 
 var o = new out.Out('./index.html');
@@ -86,6 +87,16 @@ var rooms = {
     }
 };
 
+var ics_snippets = {
+    start: `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:lodgit\n`,
+    event: {
+        begin: `BEGIN:VEVENT\nDTSTART:`,
+        intermed: `DTEND:`,
+        end: `END:VEVENT\n`,
+    },
+    end: `END:VCALENDAR`
+}
+
 var pools = {
     luxus: {
         merged_moment: [],
@@ -157,11 +168,23 @@ p_result.then(function(){
     //log_rooms();
     logOutRooms();
     mergeAllPools();
+    buildICSfiles();
 });
 
 p_result.catch(function(){
     console.log("not every promise fulfilled - not all roomes catched");
 });
+
+function buildICSfiles(){
+
+    for(var attr in pools){
+        buildFile(pools[attr], "./" + attr + ".ics");
+        // console.log(attr + ": " + pools[attr]);
+    }
+    // for each (var v in object) {
+    //     buildFile(poolName, "./" + v + ".ics");
+    // }
+}
 
 function logOutRooms(){
     o.f(rooms,"//The rooms obj after reception and processing\n");
@@ -200,7 +223,7 @@ function mergeAllPools(){
     merge("luxus");
     mergeIntoPeriods("luxus");
     // printPool("luxus");
-    console.log("_______ comfort ______________________________________________________________________________");
+    // console.log("_______ comfort ______________________________________________________________________________");
     merge("comfort");
     mergeIntoPeriods("comfort");
     // printPool("comfort");
@@ -237,10 +260,10 @@ function merge(poolName){
         //if (r_key == "SU11") {return;}
         if (firstDone)return;   //only do first in the pool and then compare all reserved day against the reserved periods in the other rooms 
         firstDone=true;
-        console.log("\n---- " + r_key + " --------------------------------------------------");
+        // console.log("\n---- " + r_key + " --------------------------------------------------");
         //iterate through all reserved time periods
         rooms[r_key].evts.forEach((e,i,arr)=>{
-            console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
+            //console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
             if (i == arr.length -1) return;   //last period is always from now to in two years
             if (i == 0) {   //first period is always from 1970 to today (or next available day in the future)
                 //when first period from 1970 will end today it will not even do the while loop => today will not be pushed
@@ -252,11 +275,11 @@ function merge(poolName){
             while(iD.isBefore(e.end)){    //iterate through all days in the given period - but the last one
                 //does this day occur in any other reserved timperiod of other rooms in this pool
                 if (!oneOfAllOtherRoomsAvailable(poolName, r_key, iD)){
-                    console.log("   " + iD.format("YYYY.MM.DD") + " - overlap");
+                    // console.log("   " + iD.format("YYYY.MM.DD") + " - overlap");
                     pools[poolName].merged_moment.push(moment(iD));
                     pools[poolName].merged_str.push(iD.format("YYYY.MM.DD"));
                 } else {
-                    console.log("   " + iD.format("YYYY.MM.DD") + "");
+                    // console.log("   " + iD.format("YYYY.MM.DD") + "");
                 }
                 iD.add(1,"d");
             }
@@ -363,5 +386,29 @@ function mergeIntoPeriods(poolName){
                 pools[poolName].periods_str[pools[poolName].periods_str.length-1].end = m.format("YYYYMMDD");
         }
         dayBefore = moment(m);
+    });
+}
+
+function buildFile(pool, filePath){
+
+    if (fs.existsSync(filePath)) {
+            fs.writeFile(filePath, '', function(){ /* console.log('log file cleared done') */ });
+    }
+
+    var ics = ics_snippets.start;
+
+    pool.periods_moment.map(function(m,i,arr){
+
+        ics = ics + ics_snippets.event.begin + m.begin.format("YYYYMMDD") + '\n';
+        ics = ics + ics_snippets.event.intermed + m.end.add(1,"d").format("YYYYMMDD") + '\n';;
+        ics = ics + ics_snippets.event.end;
+
+    });
+
+    ics = ics + ics_snippets.end;
+
+    fs.appendFile(filePath, ics, function (err) {
+            if (err) throw err;
+            console.log(pool.constructor.name + ' saved to ' + filePath);
     });
 }

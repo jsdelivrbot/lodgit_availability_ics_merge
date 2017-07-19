@@ -12,7 +12,7 @@ exports.Out = function (path){
         }
         fs.appendFile(path, o, function (err) {
             if (err) throw err;
-            console.log('Saved!');
+            // console.log('Saved!');
         });
     }
     this.fc = function (o, prepend){
@@ -30,7 +30,7 @@ exports.Out = function (path){
         
         fs.appendFile(path, o, function (err) {
             if (err) throw err;
-            console.log('appended to file: ' + path);
+            // console.log('appended to file: ' + path);
         });
     }
     this.onnew = function () {
@@ -45,7 +45,6 @@ exports.Out = function (path){
             fs.writeFile(path, '', function(){console.log('log file cleared done')})
             fs.appendFile(path, scriptTag, function (err) {
                 if (err) throw err;
-                
             });
         }
     }

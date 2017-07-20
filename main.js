@@ -289,10 +289,10 @@ function merge(poolName){
         //if (r_key == "SU11") {return;}
         if (firstDone)return;   //only do first in the pool and then compare all reserved day against the reserved periods in the other rooms 
         firstDone=true;
-        console.log("\n---- " + r_key + " --------------------------------------------------");
+        // console.log("\n---- " + r_key + " --------------------------------------------------");
         //iterate through all reserved time periods
         rooms[r_key].evts.forEach((e,i,arr)=>{
-            console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
+            // console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
             if (i == arr.length -1 && arr.length > 1) return;   //last period is always from now to in two years so skip it
             if (i == 0) {   //first period is always from 1970 to today (or next available day in the future)
                 //when first period from 1970 will end today it will not even do the while loop => today will not be pushed
@@ -304,11 +304,11 @@ function merge(poolName){
             while(iD.isBefore(e.end)){    //iterate through all days in the given period - but the last one
                 //does this day occur in any other reserved timperiod of other rooms in this pool
                 if (!oneOfAllOtherRoomsAvailable(poolName, r_key, iD)){
-                    console.log("   " + iD.format("YYYY.MM.DD") + " - overlap");
+                    // console.log("   " + iD.format("YYYY.MM.DD") + " - overlap");
                     pools[poolName].merged_moment.push(moment(iD));
                     pools[poolName].merged_str.push(iD.format("YYYY.MM.DD"));
                 } else {
-                    console.log("   " + iD.format("YYYY.MM.DD") + "");
+                    // console.log("   " + iD.format("YYYY.MM.DD") + "");
                 }
                 iD.add(1,"d");
             }

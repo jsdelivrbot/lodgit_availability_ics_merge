@@ -16,7 +16,7 @@ var out = require('./out.js');
 var fs = require('fs');
 //define rooms and pools
 
-var o = new out.Out('./index.html');
+var o = new out.Out('./public/index.html');
 
 var rooms = {
     SU01: {
@@ -118,6 +118,12 @@ var pools = {
     }
 }
 
+var log = {
+    fetched: false,
+    pools_merged: false,
+    ics_saved: false
+}
+
 //define pools
 
 //fetch ical files
@@ -160,30 +166,53 @@ var fn = function (key, i, arr){
     });
 }
 
-var promises = Object.keys(rooms).filter((r_key) => rooms[r_key].enabled).map(fn);
+var interv_s = 0.5;
 
-var p_result = Promise.all(promises);
+interv_s = interv_s * 1000 * 60;
 
-p_result.then(function(){
-    //log_rooms();
-    logOutRooms();
-    mergeAllPools();
-    buildICSfiles();
-});
+function doPromise(){
+    var promises = Object.keys(rooms).filter((r_key) => rooms[r_key].enabled).map(fn);
 
-p_result.catch(function(){
-    console.log("not every promise fulfilled - not all roomes catched");
-});
+    var p_result = Promise.all(promises);
 
-function buildICSfiles(){
+    p_result.then(function(){
+        log.fetched = true;
+        logOutRooms();
+        mergeAllPools();
+        log.pools_merged = true;
+        var prom = new Promise(function (resolve, reject){buildICSfiles(resolve,reject);});
+        return prom;
+    }).then(function(){
+        consoleLogResult();
+    }).catch(function(){
+        consoleLogResult();
+    });
 
-    for(var attr in pools){
-        buildFile(pools[attr], "./" + attr + ".ics");
+    p_result.catch(function(){
+        console.warn("not every promise fulfilled - not all roomes catched");
+    });
+}
+
+// doPromise();
+
+var intervalID = setInterval(function(){
+    doPromise();
+}, interv_s);
+
+function consoleLogResult(){
+    //while(!log.ics_saved){};
+    o.c("(" + (log.fetched ? "*" : "-") + "|" + (log.pools_merged ? "*" : "-") + "|" + (log.ics_saved ? "*" : "-") + ") all fetched|all merged|all files stored", true);
+}
+
+function buildICSfiles(resolve, reject){
+    var keys = Object.keys(pools);
+    let last =  false;
+    keys.forEach((p,i,arr) => {
+        if (i == arr.length -1) last = true;
+        buildFile(pools[p], "./public/" + p + ".ics", last, resolve, reject);
         // console.log(attr + ": " + pools[attr]);
-    }
-    // for each (var v in object) {
-    //     buildFile(poolName, "./" + v + ".ics");
-    // }
+    });
+
 }
 
 function logOutRooms(){
@@ -231,10 +260,10 @@ function mergeAllPools(){
     merge("luxus2sz");
     mergeIntoPeriods("luxus2sz");
 
-    printPools();
+    printPoolsToFile();
 }
 
-function printPools(){
+function printPoolsToFile(){
     o.f(pools, "//----------------------- POOLS -----------------------------\n");
 }
 
@@ -260,11 +289,11 @@ function merge(poolName){
         //if (r_key == "SU11") {return;}
         if (firstDone)return;   //only do first in the pool and then compare all reserved day against the reserved periods in the other rooms 
         firstDone=true;
-        // console.log("\n---- " + r_key + " --------------------------------------------------");
+        console.log("\n---- " + r_key + " --------------------------------------------------");
         //iterate through all reserved time periods
         rooms[r_key].evts.forEach((e,i,arr)=>{
-            //console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
-            if (i == arr.length -1) return;   //last period is always from now to in two years
+            console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
+            if (i == arr.length -1 && arr.length > 1) return;   //last period is always from now to in two years so skip it
             if (i == 0) {   //first period is always from 1970 to today (or next available day in the future)
                 //when first period from 1970 will end today it will not even do the while loop => today will not be pushed
                 //therefore set iD to today
@@ -275,11 +304,11 @@ function merge(poolName){
             while(iD.isBefore(e.end)){    //iterate through all days in the given period - but the last one
                 //does this day occur in any other reserved timperiod of other rooms in this pool
                 if (!oneOfAllOtherRoomsAvailable(poolName, r_key, iD)){
-                    // console.log("   " + iD.format("YYYY.MM.DD") + " - overlap");
+                    console.log("   " + iD.format("YYYY.MM.DD") + " - overlap");
                     pools[poolName].merged_moment.push(moment(iD));
                     pools[poolName].merged_str.push(iD.format("YYYY.MM.DD"));
                 } else {
-                    // console.log("   " + iD.format("YYYY.MM.DD") + "");
+                    console.log("   " + iD.format("YYYY.MM.DD") + "");
                 }
                 iD.add(1,"d");
             }
@@ -300,7 +329,7 @@ function oneOfAllOtherRoomsAvailable(poolName,exclude_key,day){
         rooms[r_key].evts.forEach((e,i,arr)=>{
             //console.log(e.begin.format("YYYY.MM.DD") + " - " + e.end.format("YYYY.MM.DD"));
             //if (i == 0) return;               //first one is always from 1970 to next available dat in the future
-            if (i == arr.length -1) return;   //last one is always from now to in two years
+            if (i == arr.length -1 && arr.length > 1) return;   //last one is always from now to in two years
             let begin = day.isSameOrAfter(e.begin);
             let end = day.isSameOrBefore(e.end);
             if (day.isSameOrAfter(e.begin) && day.isBefore(e.end)){
@@ -319,6 +348,7 @@ function oneOfAllOtherRoomsAvailable(poolName,exclude_key,day){
 }
 
 function mergeIntoPeriods(poolName){
+    //fasst das array mit den merged einzeltagen für jeden pool in zeitperiode mit begin und end
     //var dayBefore = {};
     //var dayBefore = moment(pools[poolName].merged_moment[0]).subtract(7,"days");
     var dayBefore = moment(pools[poolName].merged_moment[0]);
@@ -342,9 +372,13 @@ function mergeIntoPeriods(poolName){
                         begin: "19700101",
                         end: ""
                     });
+                    if (arr.length >= 1){
+                        pools[poolName].periods_moment[pools[poolName].periods_moment.length - 1].end = moment(m);
+                        pools[poolName].periods_str[pools[poolName].periods_moment.length - 1].end = m.format("YYYYMMDD");
+                    }
                 //wenn m nach heute ist
                 }else if(m.isAfter(moment(),'day')){
-                    //insert 1970 to today  1970 ---|
+                    //insert/add 1970 to today  1970 ---|
                     //
                     pools[poolName].periods_moment.push({
                         begin: moment(moment("19700101","YYYYMMDD")),
@@ -389,10 +423,15 @@ function mergeIntoPeriods(poolName){
     });
 }
 
-function buildFile(pool, filePath){
+function buildFile(pool, filePath, last, resolve, reject){
 
     if (fs.existsSync(filePath)) {
-            fs.writeFile(filePath, '', function(){ /* console.log('log file cleared done') */ });
+            fs.writeFile(filePath, '', function(err){ 
+                if (err) {
+                    log.ics_saved = false;
+                    throw err;
+                }
+            });
     }
 
     var ics = ics_snippets.start;
@@ -408,7 +447,15 @@ function buildFile(pool, filePath){
     ics = ics + ics_snippets.end;
 
     fs.appendFile(filePath, ics, function (err) {
-            if (err) throw err;
-            console.log(pool.constructor.name + ' saved to ' + filePath);
+            if (err) {
+                log.ics_saved = false;
+                reject();
+                throw err;
+            }
+            if (last) {
+                log.ics_saved = true;
+                resolve();
+            }
+            //o.c(pool.constructor.name + ' saved to ' + filePath, true);
     });
 }

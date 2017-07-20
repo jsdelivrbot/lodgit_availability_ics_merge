@@ -1,9 +1,14 @@
 var fs = require('fs');
+var moment = require('moment');
 
 exports.Out = function (path){
     this.path=path;
-    this.c = function(o){
-        console.log(o);
+    this.c = function(o, date){
+        if (date){
+            console.log(moment().format("YYYY.MM.DD hh:mm:ss") + " - " + o);
+        }else{
+            console.log(o);
+        }
     }
     this.f = function (o, prepend){
         if (typeof o == "object"){
@@ -12,7 +17,7 @@ exports.Out = function (path){
         }
         fs.appendFile(path, o, function (err) {
             if (err) throw err;
-            // console.log('Saved!');
+            //console.log('Saved!');
         });
     }
     this.fc = function (o, prepend){
@@ -42,7 +47,7 @@ exports.Out = function (path){
             .null { color: magenta !important; }
             .key { color: red !important; }</style>`;
         if (fs.existsSync(path)) {
-            fs.writeFile(path, '', function(){console.log('log file cleared done')})
+            fs.writeFile(path, '', function(){/*console.log('log file cleared done')*/})
             fs.appendFile(path, scriptTag, function (err) {
                 if (err) throw err;
             });

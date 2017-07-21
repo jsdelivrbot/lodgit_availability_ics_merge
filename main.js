@@ -1,5 +1,7 @@
 /* 
 Written: Jacob Haemmerle
+fetched die ics calendar availability files vom jeder suite vom lodgit server und merged die verschiedenen pools/kategorien
+zu einem ics file welches airbnb etc. als verfügbarkeits ics datei angeboten werden kann
 Zentrales "problem":
 im ics includiert jede buchungsperiode den abreisetag |***-|
 beim tagweisen vergleichen können zwei (merged) perioden aneinanderkommen und der merge wird dann zu einer
@@ -16,9 +18,14 @@ var out = require('./out.js');
 var fs = require('fs');
 //define rooms and pools
 
-var o = new out.Out('./public/index.html');
+//var p = {};
 
-var rooms = {
+//var r = {};
+
+var o = {};
+
+var rooms = {};
+const rooms_tmpl = {
     SU01: {
         enabled: true,
         pool: "luxus",
@@ -87,7 +94,7 @@ var rooms = {
     }
 };
 
-var ics_snippets = {
+const ics_snippets = {
     start: `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:lodgit\n`,
     event: {
         begin: `BEGIN:VEVENT\nDTSTART:`,
@@ -97,7 +104,8 @@ var ics_snippets = {
     end: `END:VCALENDAR`
 }
 
-var pools = {
+var pools = {};
+const pools_tmpl = {
     luxus: {
         merged_moment: [],
         merged_str: [],
@@ -118,7 +126,8 @@ var pools = {
     }
 }
 
-var log = {
+var log = {};
+const log_tmpl = {
     fetched: false,
     pools_merged: false,
     ics_saved: false
@@ -166,11 +175,12 @@ var fn = function (key, i, arr){
     });
 }
 
-var interv_s = 0.5;
+var interv_m = 0.1;
 
-interv_s = interv_s * 1000 * 60;
+interv_m = interv_m * 1000 * 60;
 
 function doPromise(){
+    //generate array of promises
     var promises = Object.keys(rooms).filter((r_key) => rooms[r_key].enabled).map(fn);
 
     var p_result = Promise.all(promises);
@@ -184,6 +194,8 @@ function doPromise(){
         return prom;
     }).then(function(){
         consoleLogResult();
+        //r.f(rooms_tmpl,"//rooms_tmpl at finish\n");
+        //p.f(pools_tmpl,"//pools_tmpl at finish\n");
     }).catch(function(){
         consoleLogResult();
     });
@@ -196,8 +208,32 @@ function doPromise(){
 // doPromise();
 
 var intervalID = setInterval(function(){
+    start_script();
+}, interv_m);
+
+
+
+function start_script(){
+    r = new out.Out('./public/rooms.html');
+    //p = new out.Out('./public/pools.html');
+    //o = new out.Out('./public/index.html');
+    /* rooms = null;
+    pools = null;
+    pools = undefined;
+    pools = {};
+    log = null; */
+
+    rooms =  JSON.parse(JSON.stringify(rooms_tmpl));
+    pools = JSON.parse(JSON.stringify(pools_tmpl));
+    log = JSON.parse(JSON.stringify(log_tmpl));
+
+    //r.f(rooms_tmpl,"//rooms_tmpl at start\n");
+    //p.f(pools_tmpl,"//pools_tmpl at start\n");
+
+    //o.c(rooms_tmpl);
+    //o.c(pools);
     doPromise();
-}, interv_s);
+}
 
 function consoleLogResult(){
     //while(!log.ics_saved){};

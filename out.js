@@ -4,6 +4,9 @@ var moment = require('moment');
 exports.Out = function (path){
     this.path=path;
     this.c = function(o, date){
+        if (typeof o == "object"){
+            var o = JSON.stringify(o, undefined, 2);
+        }
         if (date){
             console.log(moment().format("YYYY.MM.DD hh:mm:ss") + " - " + o);
         }else{

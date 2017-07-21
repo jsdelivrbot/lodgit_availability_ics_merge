@@ -133,12 +133,6 @@ const log_tmpl = {
     ics_saved: false
 }
 
-//define pools
-
-//fetch ical files
-
-// report on not able to fetch all links!!!
-
 var reg = /BEGIN:VEVENT\nDTSTART:([0-9]{8})\nDTEND:([0-9]{8})/g;
 
 var fn = function (key, i, arr){
@@ -175,9 +169,38 @@ var fn = function (key, i, arr){
     });
 }
 
-var interv_m = 0.1;
+//run script every interv_m minutes
+var interv_m = 0.05;
 
 interv_m = interv_m * 1000 * 60;
+
+// doPromise();
+
+var intervalID = setInterval(function(){
+    start_script();
+}, interv_m);
+
+function start_script(){
+    o = new out.Out('./public/index.html');
+    //r = new out.Out('./public/rooms.html');
+    //p = new out.Out('./public/pools.html');
+    /* rooms = null;
+    pools = null;
+    pools = undefined;
+    pools = {};
+    log = null; */
+
+    rooms =  JSON.parse(JSON.stringify(rooms_tmpl));
+    pools = JSON.parse(JSON.stringify(pools_tmpl));
+    log = JSON.parse(JSON.stringify(log_tmpl));
+
+    //r.f(rooms_tmpl,"//rooms_tmpl at start\n");
+    //p.f(pools_tmpl,"//pools_tmpl at start\n");
+
+    //o.c(rooms_tmpl);
+    //o.c(pools);
+    doPromise();
+}
 
 function doPromise(){
     //generate array of promises
@@ -203,36 +226,6 @@ function doPromise(){
     p_result.catch(function(){
         console.warn("not every promise fulfilled - not all roomes catched");
     });
-}
-
-// doPromise();
-
-var intervalID = setInterval(function(){
-    start_script();
-}, interv_m);
-
-
-
-function start_script(){
-    r = new out.Out('./public/rooms.html');
-    //p = new out.Out('./public/pools.html');
-    //o = new out.Out('./public/index.html');
-    /* rooms = null;
-    pools = null;
-    pools = undefined;
-    pools = {};
-    log = null; */
-
-    rooms =  JSON.parse(JSON.stringify(rooms_tmpl));
-    pools = JSON.parse(JSON.stringify(pools_tmpl));
-    log = JSON.parse(JSON.stringify(log_tmpl));
-
-    //r.f(rooms_tmpl,"//rooms_tmpl at start\n");
-    //p.f(pools_tmpl,"//pools_tmpl at start\n");
-
-    //o.c(rooms_tmpl);
-    //o.c(pools);
-    doPromise();
 }
 
 function consoleLogResult(){

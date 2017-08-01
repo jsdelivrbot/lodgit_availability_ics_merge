@@ -170,7 +170,7 @@ var fn = function (key, i, arr){
 }
 
 //run script every interv_m minutes
-var interv_m = 0.05;
+var interv_m = 20;
 
 interv_m = interv_m * 1000 * 60;
 

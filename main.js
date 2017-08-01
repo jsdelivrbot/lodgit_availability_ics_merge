@@ -245,7 +245,7 @@ function buildICSfiles(resolve, reject){
 }
 
 function logOutRooms(){
-    o.f(rooms,"//The rooms obj after reception and processing\n");
+    o.f(rooms,"//The rooms obj after reception and processing - fetch: " + moment().format("YYYY.MM.DD hh:mm:ss") + "\n");
     /*console.log(rooms);
     Object.keys(rooms).forEach((r_key)=>{
         if (!rooms[r_key].enabled) return;

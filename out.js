@@ -1,5 +1,5 @@
 var fs = require('fs');
-var moment = require('moment');
+var moment = require('moment-timezone');
 
 exports.Out = function (path){
     this.path=path;
@@ -8,7 +8,7 @@ exports.Out = function (path){
             var o = JSON.stringify(o, undefined, 2);
         }
         if (date){
-            console.log(moment().format("YYYY.MM.DD hh:mm:ss") + " - " + o);
+            console.log(moment().tz('Europe/Vienna').format("YYYY.MM.DD HH:mm:ss") + " - " + o);
         }else{
             console.log(o);
         }

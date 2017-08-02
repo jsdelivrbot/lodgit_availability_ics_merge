@@ -13,17 +13,18 @@ je nach sommer oder winterzeit der tag davor 22:00 oder 23:00 - das passt so, is
 */
 
 var request = require('request');
-var moment = require('moment');
+var moment = require('moment-timezone');
 var out = require('./out.js');
 var fs = require('fs');
-//define rooms and pools
 
-//var p = {};
+//run script every interv_m minutes
+var interv_m = 0.08;
 
-//var r = {};
+interv_m = interv_m * 1000 * 60;
 
 var o = {};
 
+//define rooms and pools
 var rooms = {};
 const rooms_tmpl = {
     SU01: {
@@ -169,11 +170,6 @@ var fn = function (key, i, arr){
     });
 }
 
-//run script every interv_m minutes
-var interv_m = 20;
-
-interv_m = interv_m * 1000 * 60;
-
 // doPromise();
 
 var intervalID = setInterval(function(){
@@ -245,7 +241,7 @@ function buildICSfiles(resolve, reject){
 }
 
 function logOutRooms(){
-    o.f(rooms,"//The rooms obj after reception and processing - fetch: " + moment().format("YYYY.MM.DD hh:mm:ss") + "\n");
+    o.f(rooms,"//The rooms obj after reception and processing - fetch: " + moment().tz('Europe/Vienna').format("YYYY.MM.DD HH:mm:ss") + "\n");
     /*console.log(rooms);
     Object.keys(rooms).forEach((r_key)=>{
         if (!rooms[r_key].enabled) return;

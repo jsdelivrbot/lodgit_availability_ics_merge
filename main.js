@@ -205,18 +205,18 @@ function doPromise(){
     var p_result = Promise.all(promises);
 
     p_result.then(function(){
-        log.fetched = true;
+        p_result.fetched = true;
         logOutRooms();
         mergeAllPools();
-        log.pools_merged = true;
-        var prom = new Promise(function (resolve, reject){buildICSfiles(resolve,reject);});
+        p_result.pools_merged = true;
+        var prom = new Promise(function (resolve, reject) {buildICSfiles(resolve, reject, p_result);});
         return prom;
     }).then(function(){
-        consoleLogResult();
+        consoleLogResult(p_result);
         //r.f(rooms_tmpl,"//rooms_tmpl at finish\n");
         //p.f(pools_tmpl,"//pools_tmpl at finish\n");
     }).catch(function(){
-        consoleLogResult();
+        consoleLogResult(p_result);
     });
 
     p_result.catch(function(){
@@ -224,17 +224,17 @@ function doPromise(){
     });
 }
 
-function consoleLogResult(){
+function consoleLogResult(log){
     //while(!log.ics_saved){};
-    o.c("(" + (log.fetched ? "*" : "-") + "|" + (log.pools_merged ? "*" : "-") + "|" + (log.ics_saved ? "*" : "-") + ") all fetched|all merged|all files stored", true);
+    o.c("(" + (log.fetched ? "*" : "-") + "|" + (log.pools_merged ? "*" : "-") + "|" + (log.ics_saved ? "*" : "-") + ") all fetched|all merged|all files properly stored", true);
 }
 
-function buildICSfiles(resolve, reject){
+function buildICSfiles(resolve, reject, p_result){
     var keys = Object.keys(pools);
     let last =  false;
     keys.forEach((p,i,arr) => {
         if (i == arr.length -1) last = true;
-        buildFile(pools[p], "./public/" + p + ".ics", last, resolve, reject);
+        buildFile(pools[p], "./public/" + p + ".ics", last, resolve, reject, p_result);
         // console.log(attr + ": " + pools[attr]);
     });
 
@@ -438,7 +438,7 @@ function mergeIntoPeriods(poolName){
                     begin: m.format("YYYYMMDD"),
                     end: ""
                 });
-                break;
+                if (i != arr.length-1) break;
             case (i == arr.length-1):
                 //close last period with current day (m)
                 pools[poolName].periods_moment[pools[poolName].periods_moment.length-1].end = moment(m);
@@ -448,8 +448,8 @@ function mergeIntoPeriods(poolName){
     });
 }
 
-function buildFile(pool, filePath, last, resolve, reject){
-
+function buildFile(pool, filePath, last, resolve, reject, log){
+    //if file exists, empty it!
     if (fs.existsSync(filePath)) {
             fs.writeFile(filePath, '', function(err){ 
                 if (err) {
@@ -461,13 +461,31 @@ function buildFile(pool, filePath, last, resolve, reject){
 
     var ics = ics_snippets.start;
 
-    pool.periods_moment.map(function(m,i,arr){
+    try{
 
-        ics = ics + ics_snippets.event.begin + m.begin.format("YYYYMMDD") + '\n';
-        ics = ics + ics_snippets.event.intermed + m.end.add(1,"d").format("YYYYMMDD") + '\n';;
-        ics = ics + ics_snippets.event.end;
+        pool.periods_moment.map(function(m,i,arr){
+            try{
+                var addtxt = "";
+                addtxt = ics_snippets.event.begin;
+                addtxt = addtxt + m.begin.format("YYYYMMDD") + '\n';
+                addtxt = addtxt + ics_snippets.event.intermed;
+                addtxt = addtxt + m.end.add(1,"d").format("YYYYMMDD") + '\n';;
+                addtxt = addtxt + ics_snippets.event.end;
+            }catch(e){
+                console.warn("Problem on adding one of the dates to ics text variable thats getting saved as ics");
+                console.warn(e.message);
+                addtxt = "";
+                reject();
+            }
+            ics = ics + addtxt;
+        });
 
-    });
+    }catch(e){
+        console.warn("Problem on adding dates to ics text variable thats getting saved as ics");
+        console.warn(e.message);
+        ics = ics_snippets.start;
+        reject();
+    }
 
     ics = ics + ics_snippets.end;
 

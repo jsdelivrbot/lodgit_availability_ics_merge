@@ -42,7 +42,7 @@ exports.Out = function (path){
         });
     }
     this.onnew = function () {
-        var scriptTag = '<html><head><script src="https://rawgit.com/google/code-prettify/master/loader/run_prettify.js?autoload=true&amp;lang=css" defer></script></head>';
+        var scriptTag = '<html><head><script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?autoload=true&amp;lang=css" defer></script></head>';
         scriptTag = scriptTag + `<style>pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
             .string { color: green !important; }
             .number { color: darkorange !important; }
